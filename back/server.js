@@ -1,4 +1,6 @@
+// Permet la création d'un serveur HTTP à travers Node.js
 const http = require('http');
+console.log(http);
 const app = require('./app');
 
 const normalizePort = (val) => {
@@ -12,6 +14,7 @@ const normalizePort = (val) => {
   }
   return false;
 };
+
 const port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
@@ -42,4 +45,5 @@ server.on('listening', () => {
   const bind = typeof address === 'string' ? 'pipe ' + address : 'port ' + port;
   console.log('Listening on ' + bind);
 });
+
 server.listen(port);
