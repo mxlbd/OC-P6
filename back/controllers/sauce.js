@@ -56,7 +56,42 @@ exports.createSauce = (req, res, next) => {
 };
 
 // Modifier un produit
-exports.updateSauce = (req, res, next) => {};
+exports.updateSauce = (req, res, next) => {
+  if (req.file) {
+    Sauce.findOne({ _id: req.params.id })
+      .then((sauce) => {
+        // Récupérer le nom de l'image à supprimer
+        const filename = sauce.imageUrl.split('/images/')[1];
+        console.log(filename);
+        // Supprimer l'image du serveur
+        fs.unlink(`images/${filename}`, (err) => {
+          if (err) throw err;
+        });
+      })
+      .catch((err) => res.status(400).json({ err }));
+  }
+  // MAJ Base de données
+  // Opérateur ternaire
+  // Si il y a un fichier
+  const sauceObject = req.file
+    ? {
+        // Récupérer tout ce qu'il y a dans le req.body.sauce et mettre au format JSON
+        ...JSON.parse(req.body.sauce),
+        // Aller à la clé [ imageUrl ] et mettre le chemin complet de la nouvelle image
+        imageUrl: `${req.protocol}://${req.get('host')}/images/${
+          req.file.filename
+        }`,
+      }
+    : { ...req.body };
+  // Mettre à jour la base de donnée
+  // Récupérer l'id du produit et remplacer les nouvelles valeurs sur les anciennes
+  Sauce.updateOne(
+    { _id: req.params.id },
+    { ...sauceObject, _id: req.params.id }
+  )
+    .then(() => res.status(200).json({ message: 'Produit modifier !' }))
+    .catch((err) => res.status(400).json({ err }));
+};
 
 // Supprimer un produit
 exports.deleteSauce = (req, res, next) => {};

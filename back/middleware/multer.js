@@ -3,6 +3,7 @@ const multer = require('multer');
 const MIME_TYPES = {
   'image/jpg': 'jpg',
   'image/jpeg': 'jpg',
+  'image/gif': 'gif',
   'image/png': 'png',
 };
 
@@ -13,13 +14,13 @@ const storage = multer.diskStorage({
     cb(null, 'images');
   },
   filename: (req, file, cb) => {
-    const name = file.originalname.split(' ').join('-');
+    // Supprime les espaces et remplace par des underscores
+    const name = file.originalname.split(' ').join('_');
     // Utilise la constante dictionnaire de type MIME pour résoudre l'extension de fichier appropriée
     const extension = MIME_TYPES[file.mimetype];
-    // Indique à multer d'utiliser le nom d'origine,
-    // de remplacer les espaces par des underscores et
+    // Indique à multer d'utiliser le nom d'origine
     // d'ajouter un timestamp comme nom de fichier
-    cb(null, name + Date.now() + '.', extension);
+    cb(null, name + '_' + Date.now() + '_' + Math.random() + '.' + extension);
   },
 });
 
