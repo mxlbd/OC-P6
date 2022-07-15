@@ -1,6 +1,5 @@
 // Permet la création d'un serveur HTTP à travers Node.js
 const http = require('http');
-console.log(http);
 const app = require('./app');
 
 const normalizePort = (val) => {
