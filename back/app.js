@@ -6,9 +6,7 @@ const path = require('path');
 
 // Connexion à la base de données MongoDB
 mongoose
-  .connect(
-    `mongodb+srv://${process.env.DB_ID_PASSWORD}@cluster0.pu9lk.mongodb.net/?${process.env.DB_NAME}=true&w=majority`
-  )
+  .connect(process.env.DB_ADDRESS)
   .then(() => {
     console.log('Connected to MongoDB');
   })
