@@ -2,25 +2,11 @@ const Sauce = require('../models/sauce');
 // Donne accès aux fonctions : Créer, Lire, Écrire, Copier, Renommer, Supprimer un fichier
 const fs = require('fs');
 
-// Afficher tous les produits de la base de données
-exports.readAllSauces = async (req, res) => {
-  try {
-    const sauces = await Sauce.find().select('-__v');
-    res.status(200).json(sauces);
-  } catch (err) {
-    res.status(400).json({ err });
-  }
-};
-
-// Afficher le produit sélectionné par l'utilisateur
-exports.readOneSauce = async (req, res) => {
-  try {
-    const sauce = await Sauce.findOne({ _id: req.params.id });
-    res.status(200).json(sauce);
-  } catch (err) {
-    res.status(400).json({ err });
-  }
-};
+const {
+  findSauce,
+  findByIdSauce,
+  findByIdAndDeleteSauce,
+} = require('../queries/queries-sauce');
 
 // Créer un produit
 exports.createSauce = async (req, res) => {
@@ -44,11 +30,33 @@ exports.createSauce = async (req, res) => {
   }
 };
 
+// Afficher tous les produits de la base de données
+exports.getAllSauces = async (req, res) => {
+  try {
+    const sauces = await findSauce('-__v');
+    res.status(200).json(sauces);
+  } catch (err) {
+    res.status(400).json({ err });
+  }
+};
+
+// Afficher le produit sélectionné par l'utilisateur
+exports.getOneSauce = async (req, res) => {
+  try {
+    const sauce = await findByIdSauce(req.params.id, '-__v');
+    res.status(200).json(sauce);
+  } catch (err) {
+    res.status(400).json({ err });
+  }
+};
+
 // Modifier un produit
 exports.updateSauce = async (req, res) => {
   try {
+    const { id } = req.params;
+
     if (req.file) {
-      const sauce = await Sauce.findOne({ _id: req.params.id });
+      const sauce = await findByIdSauce(id, '-__v');
       const filename = sauce.imageUrl.split('/images/')[1];
       fs.unlink(`images/${filename}`, (err) => {
         if (err) throw err;
@@ -62,9 +70,9 @@ exports.updateSauce = async (req, res) => {
           }`,
         }
       : { ...req.body };
-    const newSauce = await Sauce.findByIdAndUpdate(req.params.id, {
+    const newSauce = await Sauce.findByIdAndUpdate(id, {
       ...sauceObject,
-      _id: req.params.id,
+      _id: id,
     });
     res.status(200).json({ message: 'Produit modifier !', contenu: newSauce });
   } catch (err) {
@@ -75,12 +83,14 @@ exports.updateSauce = async (req, res) => {
 // Supprimer un produit
 exports.deleteSauce = async (req, res) => {
   try {
-    const sauce = await Sauce.findOne({ _id: req.params.id });
+    const { id } = req.params;
+
+    const sauce = await findByIdSauce(id, '-__v');
     const filename = sauce.imageUrl.split('/images/')[1];
     fs.unlink(`images/${filename}`, (err) => {
       if (err) throw err;
     });
-    await Sauce.findByIdAndDelete(req.params.id);
+    await findByIdAndDeleteSauce(id);
     res.status(200).json({ message: 'Produit supprimé !' });
   } catch (err) {
     res.status(400).json({ err });
@@ -90,27 +100,30 @@ exports.deleteSauce = async (req, res) => {
 // Liker un produit
 exports.likeDislikeSauce = async (req, res) => {
   try {
-    const product = await Sauce.findOne({ _id: req.params.id });
-    switch (req.body.like) {
+    const { id } = req.params;
+    const { userId, like } = req.body;
+
+    const product = await findByIdSauce(id, '-__v');
+    switch (like) {
       case 1:
-        if (!product.usersLiked.includes(req.body.userId)) {
-          await Sauce.updateOne(
-            { _id: req.params.id },
+        if (!product.usersLiked.includes(userId)) {
+          await Sauce.findByIdAndUpdate(
+            { _id: id },
             {
               $inc: { likes: 1 },
-              $push: { usersLiked: req.body.userId },
+              $push: { usersLiked: userId },
             }
           );
           res.status(200).json({ message: 'Like ajouté !' });
         }
         break;
       case -1:
-        if (!product.usersDisliked.includes(req.body.userId)) {
-          await Sauce.updateOne(
-            { _id: req.params.id },
+        if (!product.usersDisliked.includes(userId)) {
+          await Sauce.findByIdAndUpdate(
+            { _id: id },
             {
               $inc: { dislikes: 1 },
-              $push: { usersDisliked: req.body.userId },
+              $push: { usersDisliked: userId },
             }
           );
           res.status(200).json({ message: 'Dislike ajouté !' });
@@ -118,22 +131,22 @@ exports.likeDislikeSauce = async (req, res) => {
         break;
 
       case 0:
-        if (product.usersLiked.includes(req.body.userId)) {
-          await Sauce.updateOne(
-            { _id: req.params.id },
+        if (product.usersLiked.includes(userId)) {
+          await Sauce.findByIdAndUpdate(
+            { _id: id },
             {
               $inc: { likes: -1 },
-              $pull: { usersLiked: req.body.userId },
+              $pull: { usersLiked: userId },
             }
           );
           res.status(200).json({ message: 'Like supprimer !' });
         }
-        if (product.usersDisliked.includes(req.body.userId)) {
-          await Sauce.updateOne(
-            { _id: req.params.id },
+        if (product.usersDisliked.includes(userId)) {
+          await Sauce.findByIdAndUpdate(
+            { _id: id },
             {
               $inc: { dislikes: -1 },
-              $pull: { usersDisliked: req.body.userId },
+              $pull: { usersDisliked: userId },
             }
           );
           res.status(200).json({ message: 'Dislike supprimer !' });

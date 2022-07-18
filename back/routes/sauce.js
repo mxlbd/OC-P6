@@ -7,18 +7,18 @@ const multer = require('../middleware/multer');
 
 // Controlleurs
 const {
-  readAllSauces,
-  readOneSauce,
   createSauce,
+  getAllSauces,
+  getOneSauce,
   updateSauce,
   deleteSauce,
   likeDislikeSauce,
 } = require('../controllers/sauce');
 
 // Routes
-router.get('/', auth, readAllSauces);
 router.post('/', auth, multer, createSauce);
-router.get('/:id', auth, readOneSauce);
+router.get('/', auth, getAllSauces);
+router.get('/:id', auth, getOneSauce);
 router.put('/:id', auth, multer, updateSauce);
 router.delete('/:id', auth, multer, deleteSauce);
 router.post('/:id/like', auth, likeDislikeSauce);
